@@ -2,50 +2,267 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Load Plotly Div</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Matrices Visualization</title>
     <script src="https://cdn.plot.ly/plotly-3.3.0.min.js" charset="utf-8"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-height: 100vh;
+        }
+        
+        header {
+            padding: 1rem;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .control-group label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        select {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            min-width: 200px;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        button {
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            align-self: flex-end;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .plot-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            min-height: 0;
+        }
+        
+        #plot-container {
+            width: 100%;
+            height: 100%;
+            max-width: calc(100vh - 120px);
+            aspect-ratio: 1 / 1;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        #target-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #666;
+        }
+        
+        #target-placeholder .plotly-graph-div {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        .loading {
+            color: #666;
+            font-size: 1.2rem;
+        }
+        
+        .error {
+            color: #dc3545;
+        }
+    </style>
 </head>
 <body>
-
-    <h1>My Dashboard</h1>
-    <div id="target-placeholder">Loading plot...</div>
+    <div class="container">
+        <header>
+            <h1>Random Matrices Visualization</h1>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="category-select">Category</label>
+                    <select id="category-select">
+                        <option value="">-- Select Category --</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="plot-select">Plot</label>
+                    <select id="plot-select" disabled>
+                        <option value="">-- Select Plot --</option>
+                    </select>
+                </div>
+                <button id="load-btn" disabled>Load Plot</button>
+            </div>
+        </header>
+        
+        <div class="plot-wrapper">
+            <div id="plot-container">
+                <div id="target-placeholder">
+                    <span>Select a category and plot to begin</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        async function loadPlot(url) {
+        let plotsConfig = null;
+        
+        // DOM elements
+        const categorySelect = document.getElementById('category-select');
+        const plotSelect = document.getElementById('plot-select');
+        const loadBtn = document.getElementById('load-btn');
+        const targetPlaceholder = document.getElementById('target-placeholder');
+        
+        // Load the configuration
+        async function loadConfig() {
             try {
-                const response = await fetch(url);
-                const htmlString = await response.text();
-
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlString, 'text/html');
-
-                const plotDiv = doc.querySelector('div');
-
-                if (!plotDiv) {
-                    throw new Error("Could not find a div in the source file.");
-                }
-
-                const target = document.getElementById('target-placeholder');
-                target.innerHTML = plotDiv.innerHTML;
-
-                // Re-execute scripts to trigger the plot rendering
-                const scripts = target.querySelectorAll("script");
-                scripts.forEach(oldScript => {
-                    const newScript = document.createElement("script");
-                    newScript.text = oldScript.text;
-                    oldScript.parentNode.replaceChild(newScript, oldScript);
-                });
-
+                const response = await fetch('plots_config.json');
+                plotsConfig = await response.json();
+                populateCategories();
             } catch (err) {
-                console.error('Error loading the plot:', err);
-                document.getElementById('target-placeholder').innerText = "Error: " + err.message;
+                console.error('Failed to load config:', err);
+                targetPlaceholder.innerHTML = '<span class="error">Failed to load configuration</span>';
             }
         }
-
+        
+        function populateCategories() {
+            plotsConfig.categories.forEach((category, idx) => {
+                const option = document.createElement('option');
+                option.value = idx;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+        }
+        
+        function populatePlots(categoryIdx) {
+            // Clear existing options
+            plotSelect.innerHTML = '<option value="">-- Select Plot --</option>';
+            
+            if (categoryIdx === '') {
+                plotSelect.disabled = true;
+                loadBtn.disabled = true;
+                return;
+            }
+            
+            const category = plotsConfig.categories[categoryIdx];
+            category.plots.forEach((plot, idx) => {
+                const option = document.createElement('option');
+                option.value = idx;
+                option.textContent = plot.name;
+                plotSelect.appendChild(option);
+            });
+            
+            plotSelect.disabled = false;
+        }
+        
+        function resetSelections() {
+            categorySelect.value = '';
+            plotSelect.innerHTML = '<option value="">-- Select Plot --</option>';
+            plotSelect.disabled = true;
+            loadBtn.disabled = true;
+        }
+        
+        // Event listeners
+        categorySelect.addEventListener('change', (e) => {
+            populatePlots(e.target.value);
+        });
+        
+        plotSelect.addEventListener('change', (e) => {
+            loadBtn.disabled = e.target.value === '';
+        });
+        
+        loadBtn.addEventListener('click', async () => {
+            const categoryIdx = categorySelect.value;
+            const plotIdx = plotSelect.value;
+            
+            if (categoryIdx === '' || plotIdx === '') return;
+            
+            const plot = plotsConfig.categories[categoryIdx].plots[plotIdx];
+            await loadCompressedPlot(plot.file);
+            
+            // Reset selections after loading
+            resetSelections();
+        });
+        
         async function loadCompressedPlot(url) {
+            targetPlaceholder.innerHTML = '<span class="loading">Loading plot...</span>';
+            
             try {
                 // 1. Fetch the .gz file
                 const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 
                 // 2. Decompress the stream using Gzip format
                 const ds = new DecompressionStream("gzip");
@@ -62,15 +279,13 @@
                 const plotDiv = doc.querySelector('div');
                 const scripts = doc.querySelectorAll('script');
 
-                const target = document.getElementById('target-placeholder');
-                
                 if (plotDiv) {
-                    target.innerHTML = plotDiv.outerHTML;
+                    targetPlaceholder.innerHTML = plotDiv.outerHTML;
                 }
 
                 // 6. Execute all scripts (both from inside div and standalone)
                 // First, execute scripts inside the target
-                const innerScripts = target.querySelectorAll("script");
+                const innerScripts = targetPlaceholder.querySelectorAll("script");
                 innerScripts.forEach(oldScript => {
                     const newScript = document.createElement("script");
                     newScript.text = oldScript.text;
@@ -86,14 +301,40 @@
                     newScript.text = script.text;
                     document.body.appendChild(newScript);
                 });
+                
+                // 7. Resize the plot to fit the container
+                setTimeout(resizePlot, 100);
 
             } catch (err) {
-                console.error('Decompression failed:', err);
-                document.getElementById('target-placeholder').innerText = "Error: " + err.message;
+                console.error('Failed to load plot:', err);
+                targetPlaceholder.innerHTML = `<span class="error">Error: ${err.message}</span>`;
             }
         }
-
-        loadCompressedPlot('complex_gaussian_eigenvalues.html.gz');
+        
+        function resizePlot() {
+            const plotDiv = targetPlaceholder.querySelector('.plotly-graph-div');
+            if (plotDiv && window.Plotly) {
+                const container = document.getElementById('plot-container');
+                const size = Math.min(container.clientWidth, container.clientHeight);
+                
+                Plotly.relayout(plotDiv, {
+                    autosize: true,
+                    width: size,
+                    height: size,
+                    margin: { l: 40, r: 40, b: 40, t: 60 }
+                });
+            }
+        }
+        
+        // Handle window resize
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizePlot, 150);
+        });
+        
+        // Initialize
+        loadConfig();
     </script>
 </body>
 </html>

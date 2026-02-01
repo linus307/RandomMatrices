@@ -1,0 +1,35 @@
+{
+  "categories": [
+    {
+      "name": "Gaussian Matrices",
+      "plots": [
+        {
+          "name": "Complex Gaussian Eigenvalues",
+          "file": "complex_gaussian_eigenvalues.html.gz"
+        },
+        {
+          "name": "Real Gaussian Eigenvalues",
+          "file": "real_gaussian_eigenvalues.html.gz"
+        }
+      ]
+    },
+    {
+      "name": "Bernoulli Matrices",
+      "plots": [
+        {
+          "name": "Bernoulli Eigenvalues",
+          "file": "bernoulli_eigenvalues.html.gz"
+        }
+      ]
+    },
+    {
+      "name": "Wishart Matrices",
+      "plots": [
+        {
+          "name": "Wishart Distribution",
+          "file": "wishart_distribution.html.gz"
+        }
+      ]
+    }
+  ]
+}
