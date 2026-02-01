@@ -52,30 +52,48 @@
                 const decompressedStream = response.body.pipeThrough(ds);
                 
                 // 3. Convert stream to text
-                const reader = await new Response(decompressedStream).text();
+                const htmlContent = await new Response(decompressedStream).text();
 
-                // 4. Parse and Inject (same logic as before)
+                // 4. Parse the HTML content
                 const parser = new DOMParser();
-                const doc = parser.parseFromString(reader, 'text/html');
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+                
+                // 5. Find all divs and scripts
                 const plotDiv = doc.querySelector('div');
+                const scripts = doc.querySelectorAll('script');
 
                 const target = document.getElementById('target-placeholder');
-                target.innerHTML = plotDiv.innerHTML;
+                
+                if (plotDiv) {
+                    target.innerHTML = plotDiv.outerHTML;
+                }
 
-                // Re-execute scripts
-                const scripts = target.querySelectorAll("script");
-                scripts.forEach(oldScript => {
+                // 6. Execute all scripts (both from inside div and standalone)
+                // First, execute scripts inside the target
+                const innerScripts = target.querySelectorAll("script");
+                innerScripts.forEach(oldScript => {
                     const newScript = document.createElement("script");
                     newScript.text = oldScript.text;
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
+                
+                // Then, execute any standalone scripts (like the slider fix)
+                scripts.forEach(script => {
+                    // Skip if this script is already inside a div we processed
+                    if (script.closest('div')) return;
+                    
+                    const newScript = document.createElement("script");
+                    newScript.text = script.text;
+                    document.body.appendChild(newScript);
+                });
 
             } catch (err) {
                 console.error('Decompression failed:', err);
+                document.getElementById('target-placeholder').innerText = "Error: " + err.message;
             }
         }
 
-        loadCompressedPlot('bernoulli_eigenvalues.html.gz');
+        loadCompressedPlot('complex_gaussian_eigenvalues.html.gz');
     </script>
 </body>
 </html>
