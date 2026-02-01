@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Load Plotly Div</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+    <h1>My Dashboard</h1>
+    <div id="target-placeholder">Loading plot...</div>
+
+    <script>
+        async function loadPlot() {
+            try {
+                // 1. Fetch the local html file
+                const response = await fetch('bernoulli_eigenvalues.html');
+                const htmlString = await response.text();
+
+                // 2. Parse the string into a temporary DOM object
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlString, 'text/html');
+
+                // 3. Find the specific div
+                const plotDiv = doc.getElementById('plotly-graph-container');
+
+                // 4. Inject it into the page
+                const target = document.getElementById('target-placeholder');
+                target.innerHTML = plotDiv.innerHTML;
+
+                // 5. CRITICAL: Manually execute the script inside the div
+                // Scripts injected via innerHTML do not run automatically.
+                const scripts = target.querySelectorAll("script");
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement("script");
+                    newScript.text = oldScript.text;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+
+            } catch (err) {
+                console.error('Error loading the plot:', err);
+                document.getElementById('target-placeholder').innerText = "Failed to load plot.";
+            }
+        }
+
+        loadPlot();
+    </script>
+</body>
+</html>
