@@ -11,17 +11,15 @@
     <div id="target-placeholder">Loading plot...</div>
 
     <script>
-        async function loadPlot() {
+        async function loadPlot(url) {
             try {
-                const response = await fetch('bernoulli_eigenvalues.html');
+                const response = await fetch(url);
                 const htmlString = await response.text();
 
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlString, 'text/html');
 
-                // IMPROVED: Look for the specific ID, but fallback to the first DIV 
-                // if you didn't wrap the source file in a specific container.
-                const plotDiv = doc.getElementById('plotly-graph-container') || doc.querySelector('div');
+                const plotDiv = doc.querySelector('div');
 
                 if (!plotDiv) {
                     throw new Error("Could not find a div in the source file.");
@@ -44,7 +42,40 @@
             }
         }
 
-        loadPlot();
+        async function loadCompressedPlot(url) {
+            try {
+                // 1. Fetch the .gz file
+                const response = await fetch(url);
+                
+                // 2. Decompress the stream using Gzip format
+                const ds = new DecompressionStream("gzip");
+                const decompressedStream = response.body.pipeThrough(ds);
+                
+                // 3. Convert stream to text
+                const reader = await new Response(decompressedStream).text();
+
+                // 4. Parse and Inject (same logic as before)
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(reader, 'text/html');
+                const plotDiv = doc.querySelector('div');
+
+                const target = document.getElementById('target-placeholder');
+                target.innerHTML = plotDiv.innerHTML;
+
+                // Re-execute scripts
+                const scripts = target.querySelectorAll("script");
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement("script");
+                    newScript.text = oldScript.text;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+
+            } catch (err) {
+                console.error('Decompression failed:', err);
+            }
+        }
+
+        loadCompressedPlot('bernoulli_eigenvalues.html.gz');
     </script>
 </body>
 </html>
