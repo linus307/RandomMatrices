@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Load Plotly Div</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
 
@@ -13,23 +13,24 @@
     <script>
         async function loadPlot() {
             try {
-                // 1. Fetch the local html file
-                const response = await fetch('bernoulli_eigenvalues.html');
+                const response = await fetch('plot_source.html');
                 const htmlString = await response.text();
 
-                // 2. Parse the string into a temporary DOM object
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlString, 'text/html');
 
-                // 3. Find the specific div
-                const plotDiv = doc.getElementById('plotly-graph-container');
+                // IMPROVED: Look for the specific ID, but fallback to the first DIV 
+                // if you didn't wrap the source file in a specific container.
+                const plotDiv = doc.getElementById('plotly-graph-container') || doc.querySelector('div');
 
-                // 4. Inject it into the page
+                if (!plotDiv) {
+                    throw new Error("Could not find a div in the source file.");
+                }
+
                 const target = document.getElementById('target-placeholder');
                 target.innerHTML = plotDiv.innerHTML;
 
-                // 5. CRITICAL: Manually execute the script inside the div
-                // Scripts injected via innerHTML do not run automatically.
+                // Re-execute scripts to trigger the plot rendering
                 const scripts = target.querySelectorAll("script");
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement("script");
@@ -39,7 +40,7 @@
 
             } catch (err) {
                 console.error('Error loading the plot:', err);
-                document.getElementById('target-placeholder').innerText = "Failed to load plot.";
+                document.getElementById('target-placeholder').innerText = "Error: " + err.message;
             }
         }
 
