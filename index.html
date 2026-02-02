@@ -111,7 +111,6 @@
         }
         
         #plot-container {
-            flex: 1;
             height: 100%;
             max-width: calc(100vh - 120px);
             aspect-ratio: 1 / 1;
@@ -125,7 +124,7 @@
         }
         
         #settings-panel {
-            width: 180px;
+            width: 100%;
             flex-shrink: 0;
             background: #fff;
             border-radius: 8px;
@@ -134,7 +133,6 @@
             display: none;
             flex-direction: column;
             gap: 1rem;
-            align-self: flex-start;
         }
         
         #settings-panel.visible {
@@ -191,7 +189,7 @@
         }
         
         #info-panel {
-            width: 180px;
+            width: 100%;
             flex-shrink: 0;
             background: #fff;
             border-radius: 8px;
@@ -200,7 +198,6 @@
             display: none;
             flex-direction: column;
             gap: 0.75rem;
-            align-self: flex-start;
             margin-top: 1rem;
         }
         
@@ -232,9 +229,88 @@
         }
         
         .side-panel-container {
+            width: 280px;
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
+            align-self: flex-start;
+            max-height: 100%;
+            overflow-y: auto;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 100;
+        }
+        
+        /* Overlay mode when window is narrow */
+        .side-panel-container.overlay-mode {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            transform: translateX(calc(100% + 2rem));
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .side-panel-container.overlay-mode.open {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* Toggle button */
+        #panel-toggle {
+            display: none;
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: none;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+            padding: 0;
+            font-size: 1.25rem;
+        }
+        
+        #panel-toggle:hover {
+            background: #f0f0f0;
+        }
+        
+        #panel-toggle.visible {
+            display: flex;
+        }
+        
+        /* Backdrop overlay */
+        #panel-backdrop {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 98;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        #panel-backdrop.visible {
+            display: block;
+            opacity: 1;
+        }
+        
+        .spacer {
+            width: 240px;
+            flex-shrink: 0;
+        }
+        
+        /* Hide spacer in overlay mode */
+        .spacer.hidden {
+            display: none;
         }
         
         #target-placeholder {
@@ -283,6 +359,9 @@
         </header>
         
         <div class="plot-wrapper">
+            <div id="panel-backdrop"></div>
+            <button id="panel-toggle" title="Toggle settings panel">⚙️</button>
+            <div class="spacer"></div>
             <div id="plot-container">
                 <div id="target-placeholder">
                     <span>Select a category and plot to begin</span>
@@ -478,8 +557,80 @@
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(resizePlot, 150);
+            resizeTimeout = setTimeout(() => {
+                resizePlot();
+                checkPanelMode();
+            }, 150);
         });
+        
+        // Side panel overlay mode handling
+        const panelToggle = document.getElementById('panel-toggle');
+        const panelBackdrop = document.getElementById('panel-backdrop');
+        const sidePanel = document.querySelector('.side-panel-container');
+        const spacer = document.querySelector('.spacer');
+        
+        let isPanelOpen = false;
+        
+        function checkPanelMode() {
+            const plotWrapper = document.querySelector('.plot-wrapper');
+            
+            // The plot wants to be a square sized to the available height
+            const wrapperHeight = plotWrapper.offsetHeight;
+            const naturalPlotSize = wrapperHeight - 32; // minus 2rem padding
+            
+            // Calculate if there's enough space for the side panel in normal mode
+            // We need: padding(16) + spacer(240) + gap(16) + plot + gap(16) + sidePanel(280) + padding(16)
+            const minWidthNeeded = 16 + 240 + 16 + naturalPlotSize + 16 + 280 + 16;
+            const availableWidth = plotWrapper.offsetWidth;
+            
+            const wasOverlay = sidePanel.classList.contains('overlay-mode');
+            
+            if (availableWidth < minWidthNeeded) {
+                // Switch to overlay mode
+                sidePanel.classList.add('overlay-mode');
+                panelToggle.classList.add('visible');
+                spacer.classList.add('hidden');
+                
+                // Close panel when switching to overlay mode
+                if (!sidePanel.classList.contains('open')) {
+                    isPanelOpen = false;
+                }
+                
+                // Resize plot if we just switched to overlay mode
+                if (!wasOverlay) {
+                    setTimeout(resizePlot, 50);
+                }
+            } else {
+                // Switch to normal mode
+                sidePanel.classList.remove('overlay-mode', 'open');
+                panelToggle.classList.remove('visible');
+                panelBackdrop.classList.remove('visible');
+                spacer.classList.remove('hidden');
+                isPanelOpen = false;
+                
+                // Resize plot if we just switched from overlay mode
+                if (wasOverlay) {
+                    setTimeout(resizePlot, 50);
+                }
+            }
+        }
+        
+        function togglePanel() {
+            isPanelOpen = !isPanelOpen;
+            if (isPanelOpen) {
+                sidePanel.classList.add('open');
+                panelBackdrop.classList.add('visible');
+            } else {
+                sidePanel.classList.remove('open');
+                panelBackdrop.classList.remove('visible');
+            }
+        }
+        
+        panelToggle.addEventListener('click', togglePanel);
+        panelBackdrop.addEventListener('click', togglePanel);
+        
+        // Initial check
+        setTimeout(checkPanelMode, 100);
         
         // Initialize
         loadConfig();
