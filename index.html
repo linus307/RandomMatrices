@@ -181,6 +181,58 @@
             border: 1px solid #ccc;
         }
         
+        .settings-group button.full-width {
+            flex: none;
+            width: 100%;
+        }
+        
+        #info-panel {
+            width: 180px;
+            flex-shrink: 0;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1rem;
+            display: none;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-self: flex-start;
+            margin-top: 1rem;
+        }
+        
+        #info-panel.visible {
+            display: flex;
+        }
+        
+        #info-panel h3 {
+            font-size: 0.9rem;
+            color: #333;
+            margin: 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-item {
+            font-size: 0.85rem;
+            color: #444;
+            line-height: 1.4;
+        }
+        
+        .info-item .info-title {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .info-item .info-value {
+            color: #333;
+        }
+        
+        .side-panel-container {
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        
         #target-placeholder {
             width: 100%;
             height: 100%;
@@ -232,21 +284,34 @@
                     <span>Select a category and plot to begin</span>
                 </div>
             </div>
-            <div id="settings-panel">
-                <h3>Settings</h3>
-                <div class="settings-group">
-                    <label>Edges</label>
-                    <div class="btn-group">
-                        <button id="btn-show-edges" class="active">Show</button>
-                        <button id="btn-hide-edges">Hide</button>
+            <div class="side-panel-container">
+                <div id="settings-panel">
+                    <h3>Settings</h3>
+                    <div class="settings-group">
+                        <label>Datasets</label>
+                        <div class="btn-group">
+                            <button id="btn-select-all">Select All</button>
+                            <button id="btn-deselect-all">Deselect All</button>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <label>Edges</label>
+                        <div class="btn-group">
+                            <button id="btn-show-edges" class="active">Show</button>
+                            <button id="btn-hide-edges">Hide</button>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <label>Axis</label>
+                        <div class="btn-group">
+                            <button id="btn-static-axis" class="active">Static</button>
+                            <button id="btn-auto-axis">Auto</button>
+                        </div>
                     </div>
                 </div>
-                <div class="settings-group">
-                    <label>Axis</label>
-                    <div class="btn-group">
-                        <button id="btn-static-axis" class="active">Static</button>
-                        <button id="btn-auto-axis">Auto</button>
-                    </div>
+                <div id="info-panel">
+                    <h3>Information</h3>
+                    <div id="info-content"></div>
                 </div>
             </div>
         </div>
