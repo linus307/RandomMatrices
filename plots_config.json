@@ -1,33 +1,39 @@
 {
   "categories": [
     {
-      "name": "Gaussian Matrices",
+      "name": "Eigenvalue Distributions",
       "plots": [
+        {
+          "name": "Cauchy Eigenvalues",
+          "file": "cauchy_eigenvalues.html.gz"
+        },
         {
           "name": "Complex Gaussian Eigenvalues",
           "file": "complex_gaussian_eigenvalues.html.gz"
         },
         {
           "name": "Real Gaussian Eigenvalues",
-          "file": "real_gaussian_eigenvalues.html.gz"
-        }
-      ]
-    },
-    {
-      "name": "Bernoulli Matrices",
-      "plots": [
+          "file": "normal_eigenvalues.html.gz"
+        },
         {
           "name": "Bernoulli Eigenvalues",
           "file": "bernoulli_eigenvalues.html.gz"
-        }
-      ]
-    },
-    {
-      "name": "Wishart Matrices",
-      "plots": [
+        },
         {
-          "name": "Wishart Distribution",
-          "file": "wishart_distribution.html.gz"
+          "name": "Uniform Eigenvalues",
+          "file": "standardized_uniform_eigenvalues.html.gz"
+        },
+        {
+          "name": "Exponential Eigenvalues",
+          "file": "standardized_exponential_eigenvalues.html.gz"
+        },
+        {
+          "name": "Lognormal Eigenvalues",
+          "file": "standardized_lognormal_eigenvalues.html.gz"
+        },
+        {
+          "name": "Chi-square Eigenvalues",
+          "file": "standardized_chisquare_eigenvalues.html.gz"
         }
       ]
     }
